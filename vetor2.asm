@@ -21,9 +21,9 @@ main:
 		li a7, 1
 		ecall #print int in a0
 		
-		la a0, nl_s
+		la a0, space_s
 		li a7, 4
-		ecall #print string nl_s in a0
+		ecall #print string space_s in a0
 		
 		addi t0, t0, 4 #t0 += 4 (1 word)
 		
