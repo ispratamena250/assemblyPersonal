@@ -1,6 +1,6 @@
-#Read an integer from console and iterate a seven times for beginning on this integer adding it 1 and printing the resulting sums in one line.
-#Hint: already commented instructions wont be recommented.
-#Hint: after an underline (_) is a hint of the "type" of an object; 's' for strings, 'l' for labels, etc.
+#Read an integer from console and iterate a seven times loop for beginning on this integer adding it 1 and printing the resulting sums in one line.
+#Hint: already commented instructions won't be recommented.
+#Hint: after an underline (_) there is a hint of the "type" of an object; 's' for strings, 'l' for labels, etc.
 .globl main_l
 .data
 	xs_v: .word 0, 0, 0, 0, 0, 0, 0 #initialized 7-size vector

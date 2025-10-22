@@ -1,0 +1,88 @@
+#Hint: already commented instructions won't be recommented.
+#Hint: after an underline (_) there is a hint of the "type" of an object; 's' for strings, 'l' for labels, etc.
+.globl main_l
+.data 
+	xs_v: .word 64, 32, 16, 8, 4, 2, 1
+	ans_v: .word 0, 0, 0, 0, 0, 0, 0, 0
+	ie128_s: .asciz "entrada incorreta"
+	bitParidade_s: .asciz "bit-paridade: "
+	saida_s: .asciz "saida: "
+	nl_s: .asciz "\n"
+.text
+main_l:
+	#standard input
+	li a7, 5 
+	ecall #read a int from console and load it into a0
+	mv t4, a0 #move input into t4
+	
+	#exception: if input is 0
+	mv t1, a0
+	li t2, 0
+	beq t1, t2, ie0_l
+	
+	#exception: if input is 128
+	li t2, 128
+	beq t1, t2, ie128_l
+	
+	#init
+	la t0, xs_v #t0 = xs_v[0]
+	la t1, zero #index for xs_v[]
+	li t2, 7 #xs_v[] size
+	la t3, zero #index for ans_v[]
+	la a2, zero
+	
+	#converting from base 10 into 2
+	jal ra, base10into2_l #jump to label and link next pc state into ra
+	
+	#@3
+	
+	#convert decimal into binary
+	base10into2_l:
+		bge t1, t2, ret #branch to ret if t1 >= t2
+		
+		lw a0, 0(t0) #a0 = xs_v[t0]
+		
+		#if a0 == t4
+		beq a0, t4, equalElements_l
+		equalElements_l: 
+			#@atual
+			
+			j base10into2_l
+		
+		addi t0, t0, 4 #t0 += 4 (one word)
+		
+		addi t1, t1, 1 #t1++
+	
+		j base10into2_l #inconditional jump
+		
+	#convert binary into decimal
+	base2into10_l:
+		#@2
+
+	#if input = 0, print 0 and exit
+	ie0_l:
+		la a0, bitParidade_s
+		li a7, 4
+		ecall #print null terminated string in a0
+	
+		li a0, 0
+		li a7, 1
+		ecall #print int in a0
+		
+		j end_l
+
+	#if input = 128, exit
+	ie128_l:
+		la a0, ie128_s
+		li a7, 4
+		ecall #print null terminated string in a0
+		
+		j end_l
+
+	end_l:
+		la a0, nl_s
+		li a7, 4
+		ecall  #print null terminated string in a0
+		
+		li a7, 10
+		ecall #exit with
