@@ -70,7 +70,7 @@ main_l:
 		greater_l:
 			add a2, a2, a0
 		
-			li a3, 1
+			li a3, 1 #problema aqui
 			
 			sw a3, 0(t3)
 		
