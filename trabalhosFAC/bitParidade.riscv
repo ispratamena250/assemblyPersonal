@@ -13,23 +13,20 @@ main_l:
 	#standard input
 	li a7, 5 
 	ecall #read a int from console and load it into a0
-	mv t4, a0 #move input into t4
+	mv t4, a0 #save input into t4
 	
 	#exception: if input is 0
-	mv t1, a0
-	li t2, 0
-	beq t1, t2, ie0_l
+	beq a0, 0, ie0_l
 	
 	#exception: if input is 128
-	li t2, 128
-	beq t1, t2, ie128_l
+	beq a0, 128, ie128_l
 	
 	#init
 	la t0, xs_v #t0 = xs_v[0]
 	la t1, zero #index for xs_v[]
 	li t2, 7 #xs_v[] size
-	la t3, zero #index for ans_v[]
-	la a2, zero
+	la t3, ans_v #index for ans_v[]
+	la a2, zero #sum of elements in xs_v[]
 	
 	#converting from base 10 into 2
 	jal ra, base10into2_l #jump to label and link next pc state into ra
@@ -38,28 +35,43 @@ main_l:
 	
 	#convert decimal into binary
 	base10into2_l:
-		bge t1, t2, ret #branch to ret if t1 >= t2
+		bge t1, t2, done1_l #branch if t1 >= t2
 		
 		lw a0, 0(t0) #a0 = xs_v[t0]
 		
-		#if a0 == t4
-		beq a0, t4, equalElements_l
-		equalElements_l: 
-			#@atual
+		addi t3, t3, 4 #one word for ans_v[]
 			
-			j base10into2_l
+		blt a0, 0(t0), small_l
+		small_l:
+			blt a2, t4, small2_l:
+			small2_l:
+				add a2, a2, a0
 		
-		addi t0, t0, 4 #t0 += 4 (one word)
+				#slt a3, a2, t4 #(a2 < t4) ? a3 = 1 : a3 = 0
+				lw a3, 1
 		
-		addi t1, t1, 1 #t1++
-	
-		j base10into2_l #inconditional jump
+				sw a3, 0(t3)
+		
+				lw a3, zero
+		
+				addi t0, t0, 4 #one word for xs_v[]
+		
+				addi t1, t1, 1 #t1++
+				done3_l:
+		done2_l:
+		
+			beq a2, t4, done_l
+		
+			blt a2, t4, base10into2_l 
+		
+			done1_l:
+				ret #return to pc state saved in ra
 		
 	#convert binary into decimal
 	base2into10_l:
 		#@2
 
-	#if input = 0, print 0 and exit
+	#if input equals to 0, print 0 and exit
 	ie0_l:
 		la a0, bitParidade_s
 		li a7, 4
@@ -71,7 +83,7 @@ main_l:
 		
 		j end_l
 
-	#if input = 128, exit
+	#if input equals to 128, exit
 	ie128_l:
 		la a0, ie128_s
 		li a7, 4
