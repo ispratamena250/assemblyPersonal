@@ -40,16 +40,13 @@ main_l:
 	li t2, 8
 	li t6, 0
 	for:
-		bge t1, t2, end_l
-		lw a0, 0(t5)
-		li a7, 1
-		ecall 
-		#la a0, space_s
-		#li a7, 4
-		#ecall 
-		addi t5, t5, 4
-		addi t1, t1, 1
-		j for
+	bge t1, t2, end_l
+	lw a0, 0(t5)
+	li a7, 1
+	ecall  
+	addi t5, t5, 4
+	addi t1, t1, 1
+	j for
 	
 	#@3
 	
@@ -61,31 +58,33 @@ main_l:
 		
 		addi t3, t3, 4
 		
-		blt a0, t4, greater_l
+		blt t4, a0, greater_l
 	
-		blt t4, a0, small_l
+		blt a0, t4, small_l
 		
 		blt a2, t4, base10into2_l
 		
 		greater_l:
+			addi t0, t0, 4
+			
+			addi t1, t1, 1
+			
+			j base10into2_l
+		
+		small_l:
 			add a2, a2, a0
 		
-			li a3, 1 #problema aqui
+			li a3, 1
 			
 			sw a3, 0(t3)
 		
 			addi t0, t0, 4
 			
 			addi t1, t1, 1
-		
-			j base10into2_l
-		
-		small_l:
-			addi t0, t0, 4
 			
-			addi t1, t1, 1
-			
-			j base10into2_l
+			bge a2, t4, done1_l
+		
+			j base10into2_l			
 		
 		done1_l:
 			ret
