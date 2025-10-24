@@ -7,7 +7,6 @@
 	ie128_s: .asciz "entrada incorreta"
 	bitParidade_s: .asciz "bit-paridade: "
 	saida_s: .asciz "saida: "
-	space_s: .asciz " "
 	nl_s: .asciz "\n"
 .text
 main_l:
@@ -40,54 +39,42 @@ main_l:
 	li t2, 8
 	li t6, 0
 	for:
-	bge t1, t2, end_l
-	lw a0, 0(t5)
-	li a7, 1
-	ecall  
-	addi t5, t5, 4
-	addi t1, t1, 1
-	j for
+		bge t1, t2, end_l
+		lw a0, 0(t5)
+		li a7, 1
+		ecall  
+		addi t5, t5, 4
+		addi t1, t1, 1
+		j for
 	
 	#@3
 	
 	#convert decimal into binary
 	base10into2_l:
-		bge t1, t2, done1_l
-	
-		lw a0, 0(t0)
+		    bge t1, t2, done1_l #index i      
 		
-		addi t3, t3, 4
+		    lw a0, 0(t0) #a0 = xs_v[t0]               
+		    addi t3, t3, 4 #position in ans_v[t3]           
 		
-		blt t4, a0, greater_l
-	
-		blt a0, t4, small_l
+		    blt t4, a0, writeZero_l #if current value is less then the element in ans_v[t3]
 		
-		blt a2, t4, base10into2_l
+		    sub t4, t4, a0
+		    li a3, 1
+		    sw a3, 0(t3) #right 1 in ans_v[t3]
+		    addi t0, t0, 4 #position in xs_v[t0]
+		    addi t1, t1, 1
+		    
+		    j base10into2_l
 		
-		greater_l:
-			addi t0, t0, 4
-			
-			addi t1, t1, 1
-			
-			j base10into2_l
-		
-		small_l:
-			add a2, a2, a0
-		
-			li a3, 1
-			
-			sw a3, 0(t3)
-		
-			addi t0, t0, 4
-			
-			addi t1, t1, 1
-			
-			bge a2, t4, done1_l
-		
-			j base10into2_l			
+		writeZero_l:
+		    sw x0, 0(t3) #right 0 in ans_v[t3]               
+		    addi t0, t0, 4
+		    addi t1, t1, 1
+		    
+		    j base10into2_l
 		
 		done1_l:
-			ret
+		    ret
 		
 	#convert binary into decimal
 	#base2into10_l:
