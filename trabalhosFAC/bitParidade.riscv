@@ -3,10 +3,12 @@
 .globl main_l
 .data 
 	xs_v: .word 64, 32, 16, 8, 4, 2, 1
+	ys_v: .word 128, 64, 32, 16, 8, 4, 2, 1
 	ans_v: .word 0, 0, 0, 0, 0, 0, 0, 0
 	ie128_s: .asciz "entrada incorreta"
 	bitParidade_s: .asciz "bit-paridade: "
 	saida_s: .asciz "saida: "
+	space_s: .asciz " "
 	nl_s: .asciz "\n"
 .text
 main_l:
@@ -43,26 +45,24 @@ main_l:
 	la a0, nl_s
 	li a7, 4
 	ecall
+	
+	#converting from base 2 into 10
+	jal ra, base2into10_l
+	
 	la a0, saida_s
 	li a7, 4
 	ecall 
+	mv a0, a4 #printa saida aqui
+	li a7, 1
+	ecall
 	la a0, nl_s
 	li a7, 4
 	ecall
 	
-	#teste
-	la t5, ans_v
-	li t1, 0
-	li t2, 8
-	li t6, 0
-	for:
-		bge t1, t2, end_l
-		lw a0, 0(t5)
-		li a7, 1
-		ecall  
-		addi t5, t5, 4
-		addi t1, t1, 1
-		j for
+	#test
+	#jal ra, test_l
+	
+	j end_l
 	
 	#convert decimal into binary
 	base10into2_l:
@@ -92,8 +92,37 @@ main_l:
 		    ret
 		
 	#convert binary into decimal
-	#base2into10_l:
-		#@
+	base2into10_l:
+		la t0, ans_v
+		li t1, 0
+		li t2, 8
+		li t3, 1
+		la t4, ys_v
+		li a4, 0 #saida
+		
+		sw t3, 0(t0)
+		
+		for1_l:
+			bge t1, t2, done2_l
+			
+			lw a0, 0(t0)
+			lw t5, 0(t4)
+						
+			beq a0, x0, skipWhenZero_l
+
+			add a4, a4, t5
+			
+			skipWhenZero_l:
+				addi t0, t0, 4
+				
+				addi t4, t4, 4
+				
+				addi t1, t1, 1
+			
+				j for1_l
+		
+		done2_l:
+			ret
 
 	#if input equals to 0, print 0 and exit
 	ie0_l:
@@ -104,6 +133,18 @@ main_l:
 		li a0, 0
 		li a7, 1
 		ecall #print int in a0
+		
+		la a0, nl_s
+		li a7, 4
+		ecall
+		
+		la a0, saida_s
+		li a7, 4
+		ecall
+		
+		li a0, 0
+		li a7, 1
+		ecall
 		
 		j end_l
 
@@ -122,3 +163,20 @@ main_l:
 		
 		li a7, 10
 		ecall #exit with
+		
+	#test: print ans_v[]
+	test_l:
+		la t5, ans_v
+		li t1, 0
+		li t2, 8
+		li t6, 0
+		forTest_l:
+			bge t1, t2, outTest_l
+			lw a0, 0(t5)
+			li a7, 1
+			ecall  
+			addi t5, t5, 4
+			addi t1, t1, 1
+			j forTest_l
+		outTest_l:
+			ret
