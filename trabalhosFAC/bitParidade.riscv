@@ -8,7 +8,6 @@
 	ie128_s: .asciz "entrada incorreta"
 	bitParidade_s: .asciz "bit-paridade: "
 	saida_s: .asciz "saida: "
-	space_s: .asciz " "
 	nl_s: .asciz "\n"
 .text
 main_l:
@@ -31,17 +30,20 @@ main_l:
 	li t2, 7 #xs_v[] size
 	la t3, ans_v #index for ans_v[]
 	li a2, 0 #sum of elements in xs_v[]
+	li a5, 0 #bit-paridade
 	
 	#converting from base 10 into 2
 	jal ra, base10into2_l #jump to label and link next pc state into ra
 	
-	#final
 	la a0, bitParidade_s
 	li a7, 4
 	ecall 
-	li a0, 1
+	jal ra, whichParidade_l
+	#
+	mv a0, a5
 	li a7, 1
 	ecall
+	#
 	la a0, nl_s
 	li a7, 4
 	ecall
@@ -55,12 +57,12 @@ main_l:
 	mv a0, a4 #printa saida aqui
 	li a7, 1
 	ecall
-	la a0, nl_s
-	li a7, 4
-	ecall
 	
 	#test
-	#jal ra, test_l
+	la a0, nl_s
+	li a7, 4 
+	ecall
+	jal ra, test_l
 	
 	j end_l
 	
@@ -74,6 +76,7 @@ main_l:
 		    blt t4, a0, writeZero_l #if current value is less then the element in ans_v[t3]
 		
 		    sub t4, t4, a0
+		    addi a5, a5, 1 #bit-paridade
 		    li a3, 1
 		    sw a3, 0(t3) #right 1 in ans_v[t3]
 		    addi t0, t0, 4 #position in xs_v[t0]
@@ -100,7 +103,21 @@ main_l:
 		la t4, ys_v
 		li a4, 0 #saida
 		
-		sw t3, 0(t0)
+		beq a5, t3, bitParidadeEquals1_l
+		
+		beq a5, zero, bitParidadeEquals0_l
+		
+		bitParidadeEquals1_l:
+			sw t3, 0(t0)
+			
+			j for1_l
+			
+		bitParidadeEquals0_l:
+			li t3, 0
+			
+			sw t3, 0(t0)
+			
+			j for1_l
 		
 		for1_l:
 			bge t1, t2, done2_l
@@ -120,8 +137,28 @@ main_l:
 				addi t1, t1, 1
 			
 				j for1_l
-		
+				
 		done2_l:
+			ret
+
+	#finding paridade
+	whichParidade_l:
+		li t1, 2
+	
+		remu a0, a5, t1
+		
+		beq a0, zero, equalsZero_l
+		
+		li a5, 1
+		
+		j outWhichParidade_l
+		
+		equalsZero_l:
+			li a5, 0
+			
+			j outWhichParidade_l
+		
+		outWhichParidade_l:
 			ret
 
 	#if input equals to 0, print 0 and exit
@@ -162,7 +199,7 @@ main_l:
 		ecall  #print null terminated string in a0
 		
 		li a7, 10
-		ecall #exit with
+		ecall #exit with 0
 		
 	#test: print ans_v[]
 	test_l:
