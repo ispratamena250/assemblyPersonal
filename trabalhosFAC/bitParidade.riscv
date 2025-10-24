@@ -33,6 +33,23 @@ main_l:
 	#converting from base 10 into 2
 	jal ra, base10into2_l #jump to label and link next pc state into ra
 	
+	#final
+	la a0, bitParidade_s
+	li a7, 4
+	ecall 
+	li a0, 1
+	li a7, 1
+	ecall
+	la a0, nl_s
+	li a7, 4
+	ecall
+	la a0, saida_s
+	li a7, 4
+	ecall 
+	la a0, nl_s
+	li a7, 4
+	ecall
+	
 	#teste
 	la t5, ans_v
 	li t1, 0
@@ -46,8 +63,6 @@ main_l:
 		addi t5, t5, 4
 		addi t1, t1, 1
 		j for
-	
-	#@3
 	
 	#convert decimal into binary
 	base10into2_l:
@@ -78,7 +93,7 @@ main_l:
 		
 	#convert binary into decimal
 	#base2into10_l:
-		#@2
+		#@
 
 	#if input equals to 0, print 0 and exit
 	ie0_l:
