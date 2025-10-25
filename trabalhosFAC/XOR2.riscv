@@ -1,0 +1,38 @@
+.globl main
+.data
+	buffer: .space 4
+	nl_s: .asciz "\n"
+.text
+main:
+	#init
+	addi sp, sp, -200
+	addi a4, sp, 0 #index in stack
+	li t1, 1 #false
+	li t2, 2 #true
+
+	li a7, 5
+	ecall #read int
+	
+	li a2, 0 #index i
+	mv a3, a0 #size
+	
+	for1:
+		bge a2, a3, outFor1
+		
+		#@ler
+		la a0, buffer
+		li a1, 4
+		li a7, 8
+		ecall #read string from console
+		#@fazer xor
+		
+		#@colocar na stack
+		
+		addi a2, a2, 1
+		addi a4, a4, 4 #sp
+		
+		j for1
+	
+	outFor1:
+	
+	#@imprimir stack
