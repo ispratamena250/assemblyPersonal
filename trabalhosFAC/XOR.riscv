@@ -1,0 +1,46 @@
+.globl main
+.text
+main:
+    # lê número de iterações
+    li a7, 5
+    ecall
+    mv t0, a0          # t0 = número de iterações (n)
+    
+    addi sp, sp, -200  # reserva espaço para até 50 resultados (50*4=200 bytes)
+    mv t1, sp          # t1 = ponteiro para a stack
+    
+    li t2, 0           # contador do loop
+    
+    li t3, 0           # acumulador do XOR
+    
+loop_input:
+    bge t2, t0, loop_done
+    
+    # lê primeiro número
+    li a7, 5
+    ecall
+    mv t4, a0
+    
+    # lê segundo número
+    li a7, 5
+    ecall
+    mv t5, a0
+    
+    # faz XOR
+    xor t6, t4, t5
+    sw t6, 0(t1)
+    addi t1, t1, 4
+    
+    # acumula XOR total
+    xor t3, t3, t6
+    
+    addi t2, t2, 1
+    j loop_input
+
+loop_done:
+    mv a0, t3
+    li a7, 1
+    ecall
+
+    li a7, 10
+    ecall
