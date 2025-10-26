@@ -22,7 +22,7 @@ main_l:
 	
 	#exception: if input is 128
 	li t1, 128
-	beq a0, t1, ie128_l
+	bge a0, t1, ie128_l
 	
 	#init
 	la t0, xs_v #t0 = xs_v[0]
@@ -37,17 +37,21 @@ main_l:
 	#converting from base 10 into 2
 	jal ra, base10into2_l #jump to label and link next pc state into ra
 	
+	#test
+	#jal ra, test_l
+	#la a0, nl_s
+	#li a7, 4
+	#ecall
+	
 	la a0, bitParidade_s
 	li a7, 4
 	ecall 
 	jal ra, whichParidade_l
 	la t0, ans_v
 	sw a5, 0(t0)
-	#
 	mv a0, a5
 	li a7, 1
 	ecall
-	#
 	la a0, nl_s
 	li a7, 4
 	ecall
@@ -75,9 +79,7 @@ main_l:
 		    bge t1, t2, done1_l #index i      
 		
 		    lw a0, 0(t0) #a0 = xs_v[t0]     
-		    sw x0, 0(t3)
-		              
-		    #addi t3, t3, 4 #position in ans_v[t3]           
+		    sw x0, 0(t3)    
 		
 		    blt t4, a0, writeZero_l #if current value is less then the element in ans_v[t3]
 		
@@ -87,13 +89,8 @@ main_l:
 
 		    sw a3, 0(t3) #right 1 in ans_v[t3]
 	            addi a5, a5, 1 #bit-paridade
-		    #addi t0, t0, 4 #position in xs_v[t0] #acho que nao faz sentido
-		    #addi t1, t1, 1 #acho que nao faz sentido
-		    
-		    #j base10into2_l #ele tira
 		
-		writeZero_l:
-		    #sw x0, 0(t3) #right 0 in ans_v[t3]               
+		writeZero_l:         
 		    addi t0, t0, 4
 		    addi t3, t3, 4 #ele coloca
 		    addi t1, t1, 1
@@ -111,22 +108,6 @@ main_l:
 		#li t3, 1
 		la t4, ys_v
 		li a4, 0 #saida
-		
-		#beq a5, t3, bitParidadeEquals1_l
-		
-		#beq a5, zero, bitParidadeEquals0_l
-		
-		#bitParidadeEquals1_l:
-			#sw t3, 0(t0)
-			
-			#j for1_l
-			
-		#bitParidadeEquals0_l:
-			#li t3, 0
-			
-			#sw t3, 0(t0)
-			
-			#j for1_l
 		
 		for1_l:
 			bge t1, t2, done2_l
