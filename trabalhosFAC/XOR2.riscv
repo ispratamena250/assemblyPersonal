@@ -1,14 +1,12 @@
 .globl main
 .data
-	buffer: .space 4
+	buffer: .space 6
 	nl_s: .asciz "\n"
 .text
 main:
 	#init
 	addi sp, sp, -200
 	addi a4, sp, 0 #index in stack
-	li t1, 1 #false
-	li t2, 2 #true
 
 	li a7, 5
 	ecall #read int
@@ -19,14 +17,26 @@ main:
 	for1:
 		bge a2, a3, outFor1
 		
-		#@ler
 		la a0, buffer
-		li a1, 4
+		li a1, 6 #buffer size
 		li a7, 8
 		ecall #read string from console
-		#@fazer xor
 		
-		#@colocar na stack
+		lbu t1, 0(a0) #t1 = buffer[0]
+		addi t1, t1, -48
+		lbu t2, 2(a0) #t2 = buffer[2]
+		addi t2, t2, -48
+
+		beq t1, t2, equals
+		j diff
+		equals:
+			li t3, 1
+			sw t3, 0(a4) #push in stack
+			j done
+		diff:
+			li t3, 2
+			sw t3, 0(a4) #push in stack
+		done:
 		
 		addi a2, a2, 1
 		addi a4, a4, 4 #sp
@@ -35,4 +45,33 @@ main:
 	
 	outFor1:
 	
-	#@imprimir stack
+	addi a4, sp, 0
+	li a2, 0
+	
+	for2:
+		bge a2, a3, outFor2
+	
+		lw a0, 0(a4)
+		
+		li a7, 1
+		ecall #print int in a0
+		
+		la a0, nl_s
+		li a7, 4
+		ecall #print string in a0
+	
+		addi a2, a2, 1
+		addi a4, a4, 4
+	
+		j for2
+	
+	outFor2:
+	
+	la a0, nl_s
+	li a7, 4
+	ecall 
+	
+	addi sp, sp, 200
+	
+	li a7, 10
+	ecall #exit
