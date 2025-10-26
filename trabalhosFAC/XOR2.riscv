@@ -36,6 +36,7 @@ main:
 		diff:
 			li t3, 2
 			sw t3, 0(a4) #push in stack
+			
 		done:
 		
 		addi a2, a2, 1
