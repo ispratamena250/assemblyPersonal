@@ -13,29 +13,29 @@
 main_l:
 	#standard input
 	li a7, 5 
-	ecall #read a int from console and load it into a0
-	mv t4, a0 #save input into t4
+	ecall #read an int from console and load it into a0
+	mv t4, a0 
 	
 	#exception: if input is 0
 	li t0, 0
 	beq a0, t0, ie0_l
 	
-	#exception: if input is 128
+	#exception: if input >= 128
 	li t1, 128
 	bge a0, t1, ie128_l
 	
 	#init
-	la t0, xs_v #t0 = xs_v[0]
+	la t0, xs_v
 	li t1, 0 #index for xs_v[]
 	li t2, 7 #xs_v[] size
-	la t3, ans_v #index for ans_v[]
+	la t3, ans_v 
 	li a2, 0 #sum of elements in xs_v[]
 	li a5, 0 #bit-paridade
 	
-	addi t3, t3, 4
+	addi t3, t3, 4 #the loop in base10into2_l must start in ans_v[1] because MSB will not be used now, only in base2into10_l
 	
 	#converting from base 10 into 2
-	jal ra, base10into2_l #jump to label and link next pc state into ra
+	jal ra, base10into2_l 
 	
 	#test
 	#jal ra, test_l
@@ -45,13 +45,15 @@ main_l:
 	
 	la a0, bitParidade_s
 	li a7, 4
-	ecall 
-	jal ra, whichParidade_l
+	ecall #print string in a0
+	
+	#finding paridade
+	jal ra, whichParidade_l 
 	la t0, ans_v
-	sw a5, 0(t0)
+	sw a5, 0(t0) #store bit paridade in ans_v[0] 
 	mv a0, a5
 	li a7, 1
-	ecall
+	ecall #print int paridade in a0
 	la a0, nl_s
 	li a7, 4
 	ecall
@@ -61,10 +63,10 @@ main_l:
 	
 	la a0, saida_s
 	li a7, 4
-	ecall 
-	mv a0, a4 #printa saida aqui
+	ecall #print string in a0
+	mv a0, a4
 	li a7, 1
-	ecall
+	ecall #print final decimal number
 	
 	#test
 	#la a0, nl_s
@@ -79,35 +81,53 @@ main_l:
 		    bge t1, t2, done1_l #index i      
 		
 		    lw a0, 0(t0) #a0 = xs_v[t0]     
-		    sw x0, 0(t3)    
+		    sw x0, 0(t3) #ans_v[] = x0
 		
-		    blt t4, a0, writeZero_l #if current value is less then the element in ans_v[t3]
+		    blt t4, a0, writeZero_l #if current value is less then the element in ans_v[t0]
 		
 		    sub t4, t4, a0
 		    li a3, 1
 
-
-		    sw a3, 0(t3) #right 1 in ans_v[t3]
-	            addi a5, a5, 1 #bit-paridade
+		    sw a3, 0(t3) #write 1 in ans_v[t3]
+	            addi a5, a5, 1 #bit-paridade counter
 		
 		writeZero_l:         
-		    addi t0, t0, 4
-		    addi t3, t3, 4 #ele coloca
+		    addi t0, t0, 4 #t0 is index in xs_v[]
+		    addi t3, t3, 4 #t3 is index in ans_v[]
 		    addi t1, t1, 1
 		    
 		    j base10into2_l
 		
 		done1_l:
-		    ret
+		    ret 
 		
+	#finding paridade
+	whichParidade_l:
+		li t1, 2
+	
+		remu a0, a5, t1 #a5 = x (mod 2) 
+		
+		beq a0, zero, equalsZero_l 
+		
+		li a5, 1 # if a0 != 0, int paridade is odd, then print 1
+		
+		j outWhichParidade_l
+		
+		equalsZero_l:
+			li a5, 0 #if a0 == 0, int paridade is even, then print 0
+			
+			j outWhichParidade_l
+		
+		outWhichParidade_l:
+			ret	
+	
 	#convert binary into decimal
 	base2into10_l:
 		la t0, ans_v
-		li t1, 0
-		li t2, 8
-		#li t3, 1
+		li t1, 0 #index i
+		li t2, 8 #loop size
 		la t4, ys_v
-		li a4, 0 #saida
+		li a4, 0 #saida: the last resulted number in decimal
 		
 		for1_l:
 			bge t1, t2, done2_l
@@ -115,40 +135,18 @@ main_l:
 			lw a0, 0(t0)
 			lw t5, 0(t4)
 						
-			beq a0, x0, skipWhenZero_l
+			beq a0, x0, skipWhenZero_l #check current element in ans_v[], if is zero, do not sum in a4
 
-			add a4, a4, t5
+			add a4, a4, t5 #then the current element ans_v[] is one, so sum in a4
 			
 			skipWhenZero_l:
-				addi t0, t0, 4
-				
-				addi t4, t4, 4
-				
-				addi t1, t1, 1
+				addi t0, t0, 4 #t0 is index in ans_v[]
+				addi t4, t4, 4 #t4 is index in ys_v[]
+				addi t1, t1, 1 
 			
 				j for1_l
 				
 		done2_l:
-			ret
-
-	#finding paridade
-	whichParidade_l:
-		li t1, 2
-	
-		remu a0, a5, t1
-		
-		beq a0, zero, equalsZero_l
-		
-		li a5, 1
-		
-		j outWhichParidade_l
-		
-		equalsZero_l:
-			li a5, 0
-			
-			j outWhichParidade_l
-		
-		outWhichParidade_l:
 			ret
 
 	#if input equals to 0, print 0 and exit
