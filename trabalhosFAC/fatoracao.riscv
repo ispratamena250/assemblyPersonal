@@ -1,0 +1,83 @@
+.globl main
+.data
+	ps_v: .word 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71 #the idea is that this will be sufficient to factorize numbers untill 32768
+	invalid_s: .asciz "Entrada invalida."
+	nl_s: .asciz "\n"
+.text
+main:
+	#init
+	la t0, ps_v #index i
+	li t1, 20 #ps_v[] size
+
+	li a7, 5
+	ecall #read an int and save it into a0
+	mv a3, a0
+	
+	li t2, -1
+	beq a3, t2, exception
+	
+	for:
+		beq t0, t1, end
+	
+		lw t3, 0(t0) #t3 = ps_v[t0]
+	
+		rem a2, a3, t3 #a2 = a3 % t3
+		
+		bnez a2, nonZeroRem #do not check if a2 != 0 (nonzero reminder)
+		
+		j zeroRem #a2 == 0 (zero reminder)
+		
+		nonZeroRem:
+			addi t0, t0, 1
+			
+			j for
+		
+		zeroRem: 
+	
+		mv a0, t3
+		li a7, 1
+		ecall #print int in a0
+	
+		la a0, nl_s
+		li a7, 4
+		ecall #print string in a0
+	
+		div a3, a3, t3 #ps_v[t0] divides a3 at least one time
+	
+		checker: #this will check if ps_v[t0] divides a3 more than one time
+ 			rem a2, a3, t3
+ 			
+ 			bnez a2, nonZeroRem
+ 			
+ 			mv a0, t3
+ 			li a7, 1
+ 			ecall #print int in a0
+ 			
+ 			la a0, nl_s
+ 			li a7, 4
+ 			ecall #print string in a0
+ 			
+ 			div a3, a3, t3
+ 			
+ 			j checker		
+			
+			#addi t0, t0, 1 #@1
+			
+		outChecker:
+	
+		j for
+	
+	exception:
+		la a0, invalid_s
+		li a7, 4
+		ecall #print string in a0
+		
+		j end
+	
+	end:
+		la a0, nl_s
+		li a7, 4
+		ecall #print string in a0
+	
+		li a7, 10
+		ecall #end
