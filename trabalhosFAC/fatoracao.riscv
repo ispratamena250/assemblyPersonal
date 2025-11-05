@@ -51,7 +51,7 @@ main:
 	
 		la a0, nl_s
 		li a7, 4
-		ecall #print string in a0
+		ecall #print nl_s
 	
 		div a3, a3, t3 #ps_v[t4] divides a3 at least one time
 	
@@ -66,7 +66,7 @@ main:
  			
 			la a0, nl_s
 			li a7, 4
- 			ecall #print string in a0
+ 			ecall #print nl_s
  			
  			div a3, a3, t3
  			
@@ -75,11 +75,11 @@ main:
 	exception:
 		la a0, invalid_s
 		li a7, 4
-		ecall #print string in a0
+		ecall #print invalid_s
 		
 		la a0, nl_s
 		li a7, 4
-		ecall #print string in a0
+		ecall #print nl_s
 		
 		j end
 	
@@ -97,7 +97,7 @@ main:
 			
 			la a0, nl_s
 			li a7, 4
-			ecall #print string in a0
+			ecall #print nl_s
 			
 		outRest:
 	
