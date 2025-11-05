@@ -1,25 +1,36 @@
+#Hint: after an underline (_) there is a hint of the "type" of an object; 's' for strings, 'l' for
+#If a3 is composed by a number (greater than one) that is not divisible by any prime of the list, it will be printed. But,
+#at the same time, 32767 must, ofcourse, be correctly decomposed
 .globl main
 .data
-	ps_v: .word 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71 #the idea is that this will be sufficient to factorize numbers untill 32768
+	ps_v: .word 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71 #the idea is that this will be 
+											       #sufficient to factorize numbers 
+											       #untill 32768
 	invalid_s: .asciz "Entrada invalida."
 	nl_s: .asciz "\n"
 .text
 main:
 	#init
-	la t0, ps_v #index i
+	li t0, 0 #index i
 	li t1, 20 #ps_v[] size
+	la t4, ps_v  #t4 = ps_v[0]
+	li t5, 1 #breaker: stop loop throw ps_v[] if a3 == 1
 
 	li a7, 5
 	ecall #read an int and save it into a0
 	mv a3, a0
 	
-	li t2, -1
-	beq a3, t2, exception
+	li t2, 0
+	ble a3, t2, exception
+	li t2, 32767
+	bgt a3, t2, exception
 	
 	for:
+		beq a3, t5, end #break loop if a3 == t5 == 1
+	
 		beq t0, t1, end
 	
-		lw t3, 0(t0) #t3 = ps_v[t0]
+		lw t3, 0(t4) #t3 = ps_v[t4]
 	
 		rem a2, a3, t3 #a2 = a3 % t3
 		
@@ -28,7 +39,9 @@ main:
 		j zeroRem #a2 == 0 (zero reminder)
 		
 		nonZeroRem:
-			addi t0, t0, 1
+			addi t0, t0, 1 #index in ps_v[]
+			
+			addi t4, t4, 4 #one word in ps_v[]
 			
 			j for
 		
@@ -37,15 +50,14 @@ main:
 		mv a0, t3
 		li a7, 1
 		ecall #print int in a0
-		#@deveria incrementar t0?
 	
 		la a0, nl_s
 		li a7, 4
 		ecall #print string in a0
 	
-		div a3, a3, t3 #ps_v[t0] divides a3 at least one time
+		div a3, a3, t3 #ps_v[t4] divides a3 at least one time
 	
-		checker: #check if ps_v[t0] divides a3 more than one time
+		checker: #check if ps_v[t4] divides a3 more than one time
  			rem a2, a3, t3
  			
  			bnez a2, nonZeroRem
@@ -62,12 +74,6 @@ main:
  			
  			j checker		
 			
-			#addi t0, t0, 1 #@1
-			
-		outChecker:
-	
-		j for
-	
 	exception:
 		la a0, invalid_s
 		li a7, 4
@@ -76,6 +82,19 @@ main:
 		j end
 	
 	end:
+		bgt a3, t5, rest #at the end of the loop, if a3 is composed by a number (greater than one) that is not divisible by any prime, print it
+		
+		j outRest
+		
+		rest:
+			bge a3, t2, outRest #do not print if a3 > 32768
+		
+			mv a0, a3
+			li a7, 1
+			ecall #print int in a0
+			
+		outRest:
+	
 		la a0, nl_s
 		li a7, 4
 		ecall #print string in a0
