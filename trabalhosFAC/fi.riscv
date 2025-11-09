@@ -5,15 +5,30 @@
 	nl_s: .asciz "\n"
 .text
 main:
+	#read
 	li a7, 5
 	ecall #read an int and store it into a0
 
+	#exceptions
 	li t0, 1
 	ble a0, t0, exception
 	li t0, 65536
 	bgeu a0, t0, exception
 	
-	#@
+	#init
+	li t1, 1 #index i: all numbers smaller then a0 starting from 1
+	mv a2, a0
+	addi a2, a2, -1 #cannot be equal to a0
+	li a3, 1 #fi function counter: number 1 will be always in the units group
+
+	for:
+		bge t1, a2, end
+		
+		#@
+	
+		addi t1, t1, 1
+		
+		j for
 	
 	exception:
 		la a0, invalid_s
