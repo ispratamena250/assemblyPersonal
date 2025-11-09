@@ -19,16 +19,49 @@ main:
 	li t1, 1 #index i: all numbers smaller then a0 starting from 1
 	mv a2, a0
 	addi a2, a2, -1 #cannot be equal to a0
-	li a3, 1 #fi function counter: number 1 will be always in the units group
+	li a3, 0 #fi function counter: number 1 will be always in the units group
 
-	for:
-		bge t1, a2, end
-		
-		#@
+	#fi function
+	jal ra, fi
 	
-		addi t1, t1, 1
+	#answer
+	mv a0, a3
+	li a7, 1
+	ecall #print ans in a0
+	
+	j end
+
+	fi:
+		bge t1, a0, end_fi
 		
-		j for
+		mv t4, a0
+		mv t5, t1
+		
+		gcd:
+			beqz t5, out_gcd
+		
+			rem t6, t4, t5 
+			mv t4, t5
+			mv t5, t6
+			
+			j gcd
+
+		out_gcd: 
+			li t3, 1		
+			beq t4, t3, rp
+				
+		not_rp:
+			addi t1, t1, 1
+			j fi
+		
+		rp: #relatively primes: add counter 
+			addi a3, a3, 1
+			addi t1, t1, 1		
+			j fi
+	
+	end_fi:
+	
+	ret
 	
 	exception:
 		la a0, invalid_s
