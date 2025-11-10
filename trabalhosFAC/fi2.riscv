@@ -1,12 +1,12 @@
 #Hint: after an underline (_) there is a hint of the "type" of an object; 's' for strings, 'l' for.
 #If a3 is composed by a number (greater than one) that is not divisible by any prime of the list, it will be printed. But,
-#at the same time, 32767 must, of course, be correctly decomposed.
+#at the same time, 65536 must, of course, be correctly decomposed.
 .globl main
 .data
 	ps_v: .word 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71 #the idea is that this will be 
 											       #sufficient to factorize numbers 
-											       #untill 32768
-	invalid_s: .asciz "Entrada invalida."
+											       #untill 65536
+	invalid_s: .asciz "entrada invalida."
 	nl_s: .asciz "\n"
 .text
 main:
@@ -14,15 +14,19 @@ main:
 	li t0, 0 #index i
 	li t1, 20 #ps_v[] size
 	la t4, ps_v  #t4 = ps_v[0]
-	li t5, 1 #breaker: stop loop throw ps_v[] if a3 == 1
+	li t5, 1 #breaker: stop loop throw ps_v[] if a3 == 1 (constant)
 
 	li a7, 5
 	ecall #read an int and save it into a0
-	mv a3, a0
+	mv a3, a0 #working copy (will be reduced)
 	
+	#save original input and init fi
+	mv t6, a3 #t6 = n_original (saved)
+	mv a4, a3 #t8 <- fi (start fi = n_original)
+
 	li t2, 1
 	ble a3, t2, exception
-	li t2, 32767
+	li t2, 65535
 	bgt a3, t2, exception
 	
 	for:
@@ -44,30 +48,18 @@ main:
 			j for
 		
 		zeroRem: 
-	
-		mv a0, t3
-		li a7, 1
-		ecall #print int in a0
-	
-		la a0, nl_s
-		li a7, 4
-		ecall #print nl_s
-	
+		
+	        mv a5, a4
+	        div a5, a5, t3 #t9 = t8 / t3
+	        sub a4, a4, a5 #t8 = t8 - (t8 / t3)
+
 		div a3, a3, t3 #ps_v[t4] divides a3 at least one time
 	
 		checker: #check if ps_v[t4] divides a3 more than one time
  			rem a2, a3, t3
  			
  			bnez a2, nonZeroRem
- 			
- 			mv a0, t3
- 			li a7, 1
- 			ecall #print int in a0
- 			
-			la a0, nl_s
-			li a7, 4
- 			ecall #print nl_s
- 			
+
  			div a3, a3, t3
  			
  			j checker		
@@ -84,22 +76,26 @@ main:
 		j end
 	
 	end:
-		bgt a3, t5, rest #at the end of the loop, if a3 is composed by a number (greater than one) that is not divisible by any prime, print it
+		#at the end of the loop, if a3 is composed by a number (greater than one) that is not divisible by any prime, print it
+		bgt a3, t5, rest #if a3 > 1 then there is a leftover factor
 		
 		j outRest
 		
-		rest:
-			bge a3, t2, outRest #do not print if a3 > 32768
-		
-			mv a0, a3
-			li a7, 1
-			ecall #print int in a0
+	rest:
+		bge a3, t2, outRest #do not print if a3 > 65535 (keeps original behavior)
 			
-			la a0, nl_s
-			li a7, 4
-			ecall #print nl_s
-			
-		outRest:
+		mv a5, a4
+		div a5, a5, a3 #t9 = fi / a3
+		sub a4, a4, a5 #fi = fi - (fi / a3)
+	
+	outRest:
+	        mv a0, a4
+	        li a7, 1
+	        ecall #print fi(n)
+	        
+	        la a0, nl_s
+	        li a7, 4
+	        ecall #print nl_s in a0
 	
 		li a7, 10
 		ecall #end
