@@ -73,7 +73,8 @@ main:
 		li a7, 4
 		ecall #print nl_s
 		
-		j end
+		li a7, 10
+		ecall #fim kkkk
 	
 	end:
 		#at the end of the loop, if a3 is composed by a number (greater than one) that is not divisible by any prime, print it
