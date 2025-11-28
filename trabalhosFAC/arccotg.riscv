@@ -13,15 +13,27 @@ main:
 	#init
 	la a2, pi_n
 	flw f0, 0(a2)
+	li t0, 1
+	li t1, -1
 
-	fmv.s fa0, f0
-	li a7, 2
-	ecall
-	
-	la a0, nl_s
-	li a7, 4
-	ecall
+	#exemple
+#	fmv.s fa0, f0
+#	li a7, 2
+#	ecall
 
 	#read
-#	li a7, 5
-#	ecall #read int from console and write in a0
+	li a7, 5
+	ecall #read int from console and write in a0
+	
+	bgtu biggerThenOne
+	
+	#@1
+	bltz 
+
+	beq equalsZero
+	
+	#@2
+	
+	blt lessThenNegativeOne
+	
+			
