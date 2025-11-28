@@ -1,0 +1,15 @@
+.globl main
+.data
+	pi_n: .float 3.141592653589
+	nl_s: .asciz "\n"
+.text
+main:
+	#init
+	la a2, pi_n
+	flw f0, 0(a2)
+
+	#read
+	li a7, 5
+	ecall #read int from console and write in a0
+	
+	

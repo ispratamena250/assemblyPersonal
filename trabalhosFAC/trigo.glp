@@ -1,0 +1,23 @@
+#Script para plot de funções trigonométricas
+
+set xlabel "x"
+set ylabel "y"
+set zeroaxis
+
+set xrange [-3:3]
+set yrange [-3:3]
+
+set title "Algumas funções"
+
+#seno
+f(x) = x - x**3/6 + x**5/120 - x**7/5040 + x**9/362880 - x**11/39916800 + x**13/6227020800 - x**15/1307674368000
+
+#cosseno
+g(x) = 1 - x**2/2 + x**4/24 - x**6/720 + x**8/40320 - x**10/3628800 + x**12/479001600 - x**14/87178291200
+
+#arctg
+h(x) = x - x**3/3 + x**5/5 - x**7/7 + x**9/9 - x**11/11 + x**13/13 - x**15/15 + x**17/17 - x**19/19 + x**21/21 - x**23/23 + x**25/25 - x**27/27 + x**29/29 - x**31/31 + x**33/33 - x**35/35 + x**37/37 - x**39/39
+
+plot f(x) w l lw 4 t "seno", \
+	g(x) w l lw 4 t "cosseno" , \
+	h(x) w l lw 4 t "arctg"
