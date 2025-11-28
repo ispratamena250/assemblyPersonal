@@ -1,6 +1,12 @@
+#Method: if       x > 1  --> 1/x - 1/3*x^3 + 1/5*x^5 - 1/7*x^7 + ...
+#	 if   0 < x <= 1 --> 3.141592/2 - (x - x^3/3 + x^5/5 - x^7/7 + ...)
+#	 if       x = 0  --> 3.141592/2
+#	 if -1 <= x < 0  --> 3.141592/2 - (x - x^3/3 + x^5/5 - x^7/7 + ...)
+# 	 if       x < -1 --> 3.141592 + (1/x - 1/3*x^3 + 1/5*x^5 - 1/7*x^7 + ...)
+#Hint: after an underline (_) there is a hint of the "type" of an object; 's' for strings, 'v' for vectors, etc.
 .globl main
 .data
-	pi_n: .float 3.141592653589
+	pi_n: .float 3.141592
 	nl_s: .asciz "\n"
 .text
 main:
@@ -8,8 +14,14 @@ main:
 	la a2, pi_n
 	flw f0, 0(a2)
 
+	fmv.s fa0, f0
+	li a7, 2
+	ecall
+	
+	la a0, nl_s
+	li a7, 4
+	ecall
+
 	#read
-	li a7, 5
-	ecall #read int from console and write in a0
-	
-	
+#	li a7, 5
+#	ecall #read int from console and write in a0
