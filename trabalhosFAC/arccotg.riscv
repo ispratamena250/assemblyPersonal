@@ -1,70 +1,120 @@
-#Method: if       x > 1  --> 1/x - 1/3*x^3 + 1/5*x^5 - 1/7*x^7 + ... 		  --> CASE 0
-#	 if   0 < x <= 1 --> 3.141592/2 - (x - x^3/3 + x^5/5 - x^7/7 + ...) 	  --> CASE 1
-#	 if       x = 0  --> 3.141592/2 					  --> CASE 2
-#	 if -1 <= x < 0  --> 3.141592/2 - (x - x^3/3 + x^5/5 - x^7/7 + ...)       --> CASE 3
-# 	 if       x < -1 --> 3.141592 + (1/x - 1/3*x^3 + 1/5*x^5 - 1/7*x^7 + ...) --> CASE 4
-#Hint: after an underline (_) there is a hint of the "type" of an object; 's' for strings, 'v' for vectors, etc.
+.section .data
+pi_half:    .float 1.57079632679      # pi/2
+eps:        .float 0.000001           # epsilon 1e-6
+one:        .float 1.0
+minus_one:  .float -1.0
+
+.section .text
 .globl main
-.data
-	pi_n: .float 3.141592
-	suc_s: .asciz "success"
-	nl_s: .asciz "\n"
-.text
+
+fabs_s:
+    fsgnjx.s fa0, fa0, fa0    # limpa sinal
+    ret
+
+arctan_series:
+    # term = x
+    fmv.s fa1, fa0          # fa1 = term
+    # sum = x
+    fmv.s fa2, fa0          # fa2 = sum
+
+    # x2 = x * x
+    fmul.s fa3, fa0, fa0    # fa3 = x2
+
+    li t0, 0                # n = 0
+
+loop_series:
+    # Próximo termo:
+    # term = -term * x2 * ((2*n - 1)/(2*n + 1))
+
+    addi t0, t0, 1          # n++
+
+    # Calcular (2*n - 1)
+    slli t1, t0, 1          # t1 = 2*n
+    addi t1, t1, -1         # t1 = 2*n - 1
+    fcvt.s.w fa4, t1        # float
+
+    # Calcular (2*n + 1)
+    slli t2, t0, 1          # t2 = 2*n
+    addi t2, t2, 1          # t2 = 2*n + 1
+    fcvt.s.w fa5, t2        # float
+
+    # ratio = (2*n - 1)/(2*n + 1)
+    fdiv.s fa4, fa4, fa5
+
+    # term = term * (-1)
+    fneg.s fa1, fa1
+
+    # term = term * x2
+    fmul.s fa1, fa1, fa3
+
+    # term = term * ratio
+    fmul.s fa1, fa1, fa4
+
+    # sum += term
+    fadd.s fa2, fa2, fa1
+
+    # Testar |term| > eps
+    fmv.s fa0, fa1
+    jal ra, fabs_s          # |term|
+    flw fa4, eps            # eps
+    fle.s t3, fa0, fa4      # |term| <= eps ?
+    bne t3, zero, end_series
+
+    j loop_series
+
+end_series:
+    fmv.s fa0, fa2
+    ret
+
+arctan_full:
+    flw fa1, one
+    flw fa2, minus_one
+
+    # if (x > 1)
+    flt.s t0, fa1, fa0      # 1 < x ?
+    bne t0, zero, big_pos
+
+    # if (x < -1)
+    flt.s t1, fa0, fa2      # x < -1 ?
+    bne t1, zero, big_neg
+
+    # |x| <= 1 => usar série diretamente
+    jal ra, arctan_series
+    ret
+
+big_pos:
+    # return pi/2 - arctan(1/x)
+    fdiv.s fa0, fa1, fa0    # 1/x
+    jal ra, arctan_series
+    flw fa1, pi_half
+    fsub.s fa0, fa1, fa0
+    ret
+
+big_neg:
+    # return -pi/2 - arctan(1/x)
+    fdiv.s fa0, fa1, fa0
+    jal ra, arctan_series
+    flw fa1, pi_half
+    fneg.s fa1, fa1
+    fsub.s fa0, fa1, fa0
+    ret
+
+arccot:
+    jal ra, arctan_full     # fa0 = atan(x)
+    flw fa1, pi_half
+    fsub.s fa0, fa1, fa0
+    ret
+
+
 main:
-	#init
-	la a2, pi_n
-	flw f0, 0(a2)
-	li t0, 1
-	fcvt.s.wu f1, t0 #f1 = 1.0
-	li t1, -1
-	fcvt.s.w f2, t1 #f2 = -1.0
-	li t3, 3 #loop
-	li t4, 0
-	li t5, 1 #pow
+    # Ler float (padrão MOJ)
+    li a7, 6        # syscall read float
+    ecall           # retorna em fa0
 
-	#exemple
-#	fmv.s fa0, f0
-#	li a7, 2
-#	ecall #print pi_n into fa0
-#	la a0, nl_s
-#	li a7, 4
-#	ecall #print nl_s into a0
+    # Calcular arccot
+    jal ra, arccot  # resultado em fa0
 
-	#read
-	li a7, 6
-	ecall #read float from console and write in fa0
-	fmv.s f3, fa0 #save input
-	
-	flt.s t2, f1, fa0 #t2 = 1 if f1 < fa0
-	beq t2, t0, case0 #branch if t1 != t0 that is if x > 1
-	
-	j end
-	
-	case0: 
-		fc0:
-		bge t4, t3, out_fc0
-			
-			li t6, 1
-			pow:
-				bge t6, t5, out_pow
-				fmul.s f3, f3, f3 #f3 = pow(f3)
-				fsw f4, 0(f3)
-				addi t6, t6, 1
-				j pow
-			out_pow:
-		
-		addi t4, t4, 1
-		addi t5, t5, 2
-		j fc0
-		
-		out_fc0:
-		
-		j end
-		
-	end:
-		la a0, nl_s
-		li a7, 4
-		ecall #print nl_s into a0
-		
-		li a7, 10
-		ecall #end
+    # Imprimir float
+    li a7, 2
+    ecall
+    ret
