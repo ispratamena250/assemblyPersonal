@@ -1,0 +1,21 @@
+.globl main
+.data
+	nl_s: .asciz "\n"
+.text
+main:	
+	li a7, 12
+	ecall #read char from cosole
+	
+	li a7, 11
+	ecall #print char into a0
+	
+	j end
+	
+	end: 
+		
+		la a0, nl_s
+		li a7, 4
+		ecall #print nl_s into a0
+		
+		li a7, 10
+		ecall #end
