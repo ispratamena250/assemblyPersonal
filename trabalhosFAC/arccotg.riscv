@@ -1,120 +1,178 @@
-.section .data
+    .data
 pi_half:    .float 1.57079632679      # pi/2
 eps:        .float 0.000001           # epsilon 1e-6
 one:        .float 1.0
 minus_one:  .float -1.0
 
-.section .text
-.globl main
+    .text
+    .globl main
 
-fabs_s:
-    fsgnjx.s fa0, fa0, fa0    # limpa sinal
+#
+# MAIN
+#
+main:
+    # Ler float (MOJ) -> fa0
+    li a7, 6
+    ecall
+
+    # Chamar arccot
+    jal ra, arccot
+
+    # Imprimir float (fa0)
+    li a7, 2
+    ecall
+
     ret
 
-arctan_series:
-    # term = x
-    fmv.s fa1, fa0          # fa1 = term
-    # sum = x
-    fmv.s fa2, fa0          # fa2 = sum
 
-    # x2 = x * x
-    fmul.s fa3, fa0, fa0    # fa3 = x2
+################################################################################
+# arctan_series(x) - usa série de Taylor para |x| <= 1
+# Entrada: fa0 = x
+# Saída:   fa0 = atan(x)
+# NOTA: não chama outras funções (sem jal), portanto não salva ra.
+################################################################################
+arctan_series:
+    # term = x  (fa1)
+    fmv.s fa1, fa0
+
+    # sum = x   (fa2)
+    fmv.s fa2, fa0
+
+    # x2 = x * x  (fa3)
+    fmul.s fa3, fa0, fa0
 
     li t0, 0                # n = 0
 
 loop_series:
-    # Próximo termo:
-    # term = -term * x2 * ((2*n - 1)/(2*n + 1))
-
     addi t0, t0, 1          # n++
 
-    # Calcular (2*n - 1)
-    slli t1, t0, 1          # t1 = 2*n
-    addi t1, t1, -1         # t1 = 2*n - 1
-    fcvt.s.w fa4, t1        # float
+    # (2*n - 1) -> t1
+    slli t1, t0, 1
+    addi t1, t1, -1
+    fcvt.s.w fa4, t1        # fa4 = float(2n-1)
 
-    # Calcular (2*n + 1)
-    slli t2, t0, 1          # t2 = 2*n
-    addi t2, t2, 1          # t2 = 2*n + 1
-    fcvt.s.w fa5, t2        # float
+    # (2*n + 1) -> t2
+    slli t2, t0, 1
+    addi t2, t2, 1
+    fcvt.s.w fa5, t2        # fa5 = float(2n+1)
 
-    # ratio = (2*n - 1)/(2*n + 1)
-    fdiv.s fa4, fa4, fa5
+    # ratio = (2n-1)/(2n+1)
+    fdiv.s fa4, fa4, fa5    # fa4 = ratio
 
-    # term = term * (-1)
+    # term = -term
     fneg.s fa1, fa1
 
-    # term = term * x2
+    # term *= x2
     fmul.s fa1, fa1, fa3
 
-    # term = term * ratio
+    # term *= ratio
     fmul.s fa1, fa1, fa4
 
     # sum += term
     fadd.s fa2, fa2, fa1
 
-    # Testar |term| > eps
-    fmv.s fa0, fa1
-    jal ra, fabs_s          # |term|
-    flw fa4, eps            # eps
-    fle.s t3, fa0, fa4      # |term| <= eps ?
-    bne t3, zero, end_series
+    # Testar |term| <= eps (inline, sem chamar fabs_s)
+    # fa6 = |term|
+    fsgnjx.s fa6, fa1, fa1    # clear sign bit -> absolute value in fa6
+
+    # carregar eps em fa4 (reusar fa4)
+    la t3, eps
+    flw fa4, 0(t3)            # fa4 = eps
+
+    # comparar fa6 <= fa4
+    fle.s t4, fa6, fa4        # t4 = (|term| <= eps) ? 1 : 0
+    bne  t4, zero, end_series
 
     j loop_series
 
 end_series:
+    # resultado em fa0
     fmv.s fa0, fa2
     ret
 
-arctan_full:
-    flw fa1, one
-    flw fa2, minus_one
 
-    # if (x > 1)
-    flt.s t0, fa1, fa0      # 1 < x ?
-    bne t0, zero, big_pos
+################################################################################
+# arctan_full(x)
+# Entrada: fa0 = x
+# Saída:   fa0 = atan(x)
+# SALVA RA (prólogo/epílogo) porque chama arctan_series com jal.
+################################################################################
+arctan_full:
+    addi sp, sp, -16
+    sw   ra, 12(sp)
+
+    # carregar constantes 1.0 e -1.0 em fa1/fa2
+    la t0, one
+    flw fa1, 0(t0)        # fa1 = 1.0
+    la t1, minus_one
+    flw fa2, 0(t1)        # fa2 = -1.0
+
+    # if (x > 1)  <=> 1.0 < x
+    flt.s t2, fa1, fa0    # t2 = (1.0 < x) ?
+    bne  t2, zero, big_pos
 
     # if (x < -1)
-    flt.s t1, fa0, fa2      # x < -1 ?
-    bne t1, zero, big_neg
+    flt.s t3, fa0, fa2    # t3 = (x < -1.0) ?
+    bne  t3, zero, big_neg
 
-    # |x| <= 1 => usar série diretamente
-    jal ra, arctan_series
+    # |x| <= 1 -> usar série
+    jal ra, arctan_series  # arctan(x) -> fa0
+
+    lw   ra, 12(sp)
+    addi sp, sp, 16
     ret
 
 big_pos:
-    # return pi/2 - arctan(1/x)
-    fdiv.s fa0, fa1, fa0    # 1/x
-    jal ra, arctan_series
-    flw fa1, pi_half
-    fsub.s fa0, fa1, fa0
+    # atan(x) = pi/2 - atan(1/x)
+    # preparar fa0 = 1/x
+    la t4, one
+    flw fa1, 0(t4)        # fa1 = 1.0
+    fdiv.s fa0, fa1, fa0  # fa0 = 1/x
+
+    jal ra, arctan_series  # arctan(1/x) -> fa0
+
+    la t5, pi_half
+    flw fa1, 0(t5)        # fa1 = pi/2
+    fsub.s fa0, fa1, fa0  # fa0 = pi/2 - arctan(1/x)
+
+    lw   ra, 12(sp)
+    addi sp, sp, 16
     ret
 
 big_neg:
-    # return -pi/2 - arctan(1/x)
-    fdiv.s fa0, fa1, fa0
-    jal ra, arctan_series
-    flw fa1, pi_half
-    fneg.s fa1, fa1
-    fsub.s fa0, fa1, fa0
+    # atan(x) = -pi/2 - atan(1/x)
+    la t6, one
+    flw fa1, 0(t6)        # fa1 = 1.0
+    fdiv.s fa0, fa1, fa0  # fa0 = 1/x
+
+    jal ra, arctan_series  # arctan(1/x) -> fa0
+
+    la t5, pi_half
+    flw fa1, 0(t5)        # fa1 = pi/2
+    fneg.s fa1, fa1       # fa1 = -pi/2
+    fsub.s fa0, fa1, fa0  # fa0 = -pi/2 - arctan(1/x)
+
+    lw   ra, 12(sp)
+    addi sp, sp, 16
     ret
 
+
+################################################################################
+# arccot(x) = pi/2 - atan(x)
+# Entrada: fa0 = x
+# Saída:   fa0 = arccot(x)
+# SALVA RA porque chama arctan_full.
+################################################################################
 arccot:
-    jal ra, arctan_full     # fa0 = atan(x)
-    flw fa1, pi_half
-    fsub.s fa0, fa1, fa0
-    ret
+    addi sp, sp, -16
+    sw   ra, 12(sp)
 
+    jal ra, arctan_full   # fa0 = atan(x)
 
-main:
-    # Ler float (padrão MOJ)
-    li a7, 6        # syscall read float
-    ecall           # retorna em fa0
+    la t0, pi_half
+    flw fa1, 0(t0)        # fa1 = pi/2
+    fsub.s fa0, fa1, fa0  # fa0 = pi/2 - atan(x)
 
-    # Calcular arccot
-    jal ra, arccot  # resultado em fa0
-
-    # Imprimir float
-    li a7, 2
-    ecall
+    lw   ra, 12(sp)
+    addi sp, sp, 16
     ret
