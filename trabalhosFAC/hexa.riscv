@@ -1,21 +1,47 @@
 .globl main
 .data
+	buffer: .space 128          
+	hexchars_s: .asciz "0123456789abcdef"
 	nl_s: .asciz "\n"
+
 .text
-main:	
-	li a7, 12
-	ecall #read char from cosole
+main:
+	la a0, buffer       
+	li a1, 128          
+	li a7, 8 
+	ecall #read string from cosole
+
+	la t0, buffer #t0 = buffer[0]
+
+	loop:
+		lbu t1, 0(t0)
+	    	beq t1, x0, end #if t1 == '\0' branch to end
+		lbu t4, 1(t0) #if t4 == '\n' branch to end --> do not print 0a for '\n'
+		beq t4, x0, end
 	
-	li a7, 11
-	ecall #print char into a0
+		#high nibble
+		srli t2, t1, 4 #isolate upper part of the byte
+		la t3, hexchars_s
+		add t2, t2, t3 #t2 = &hexchars[high]
+		lbu a0, 0(t2) #a0 = char from hexchars
+		li a7, 11            
+		ecall #print char into a0
 	
-	j end
+		#low nibble
+		andi t2, t1, 0xF #isolate lower part of the byte
+		la t3, hexchars_s
+		add t2, t2, t3
+		lbu a0, 0(t2)
+		li a7, 11
+		ecall #print char into a0
 	
-	end: 
-		
+		addi t0, t0, 1 #index++
+		j loop
+
+	end:
 		la a0, nl_s
 		li a7, 4
-		ecall #print nl_s into a0
-		
+		ecall
+	
 		li a7, 10
-		ecall #end
+		ecall
