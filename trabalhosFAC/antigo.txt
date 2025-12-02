@@ -1,0 +1,126 @@
+.data
+pi_half:    .float 1.57079632679      # pi/2
+eps:        .float 0.000001           # epsilon 1e-6
+one:        .float 1.0
+minus_one:  .float -1.0
+
+.text
+.globl main
+
+main:
+    # Ler float (padrão MOJ)
+    li a7, 6        # syscall read float
+    ecall           # retorna em fa0
+
+    # Calcular arccot
+    jal ra, arccot  # resultado em fa0
+
+    # Imprimir float
+    li a7, 2
+    ecall
+    ret
+
+fabs_s:
+    fsgnjx.s fa0, fa0, fa0    # limpa sinal
+    ret
+
+arctan_series:
+    # term = x
+    fmv.s fa1, fa0          # fa1 = term
+    # sum = x
+    fmv.s fa2, fa0          # fa2 = sum
+
+    # x2 = x * x
+    fmul.s fa3, fa0, fa0    # fa3 = x2
+
+    li t0, 0                # n = 0
+
+loop_series:
+    # Próximo termo:
+    # term = -term * x2 * ((2*n - 1)/(2*n + 1))
+
+    addi t0, t0, 1          # n++
+
+    # Calcular (2*n - 1)
+    slli t1, t0, 1          # t1 = 2*n
+    addi t1, t1, -1         # t1 = 2*n - 1
+    fcvt.s.w fa4, t1        # float
+
+    # Calcular (2*n + 1)
+    slli t2, t0, 1          # t2 = 2*n
+    addi t2, t2, 1          # t2 = 2*n + 1
+    fcvt.s.w fa5, t2        # float
+
+    # ratio = (2*n - 1)/(2*n + 1)
+    fdiv.s fa4, fa4, fa5
+
+    # term = term * (-1)
+    fneg.s fa1, fa1
+
+    # term = term * x2
+    fmul.s fa1, fa1, fa3
+
+    # term = term * ratio
+    fmul.s fa1, fa1, fa4
+
+    # sum += term
+    fadd.s fa2, fa2, fa1
+
+    # Testar |term| > eps
+    fmv.s fa0, fa1
+    jal ra, fabs_s          # |term|
+    la t4, eps
+    flw fa4, 0(t4)            # eps
+    fle.s t3, fa0, fa4      # |term| <= eps ?
+    bne t3, zero, end_series
+
+    j loop_series
+
+end_series:
+    fmv.s fa0, fa2
+    ret
+
+arctan_full:
+    la t5, one
+    flw fa1, 0(t5)
+    la t6, minus_one
+    flw fa2, 0(t6)
+
+    # if (x > 1)
+    flt.s t0, fa1, fa0      # 1 < x ?
+    bne t0, zero, big_pos
+
+    # if (x < -1)
+    flt.s t1, fa0, fa2      # x < -1 ?
+    bne t1, zero, big_neg
+
+    # |x| <= 1 => usar série diretamente
+    jal ra, arctan_series
+    ret
+
+big_pos:
+    # return pi/2 - arctan(1/x)
+    fdiv.s fa0, fa1, fa0    # 1/x
+    jal ra, arctan_series
+    la a2, pi_half
+    flw fa1, 0(a2)
+    fsub.s fa0, fa1, fa0
+    ret
+
+big_neg:
+    # return -pi/2 - arctan(1/x)
+    fdiv.s fa0, fa1, fa0
+    jal ra, arctan_series
+    flw fa1, 0(a2)
+    fneg.s fa1, fa1
+    fsub.s fa0, fa1, fa0
+    ret
+
+arccot:
+    jal ra, arctan_full     # fa0 = atan(x)
+    flw fa1, 0(a2)
+    fsub.s fa0, fa1, fa0
+    ret
+
+
+
